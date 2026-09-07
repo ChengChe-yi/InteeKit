@@ -88,8 +88,8 @@
     </Link>
   </ItemDefinitionGroup>
   <Target Name="UpxPackDll" AfterTargets="Link"
-          Condition="'$(Configuration)'=='Release' And '$(LinkSkippedExecution)' != 'true' And Exists('$(ProjectDir)upx-5.2.0\upx.exe')">
-    <Exec Command="&quot;$(ProjectDir)upx-5.2.0\upx.exe&quot; --best &quot;$(TargetPath)&quot;" />
+          Condition="'$(Configuration)'=='Release' And '$(LinkSkippedExecution)' != 'true' And Exists('$(ProjectDir)upx-5.2.1\upx.exe')">
+    <Exec Command="&quot;$(ProjectDir)upx-5.2.1\upx.exe&quot; --best &quot;$(TargetPath)&quot;" />
   </Target>
   <ItemGroup>
     <ClInclude Include="src\Hooks\Hooks.h" />

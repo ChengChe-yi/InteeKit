@@ -28,7 +28,7 @@ MinHook/libMinHook.x64.lib
 MinHook/libMinHook.x86.lib
 
 # UPX packer
-upx-5.2.0/
+upx-5.2.1/
 
 # Plugin installer script (generated, not part of source)
 install.lua
