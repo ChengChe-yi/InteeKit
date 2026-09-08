@@ -40,10 +40,10 @@ namespace ObfHook
         switch (form) {
         case Form::Ff25:
         case Form::Ff25Heap:
-        case Form::Ff15Call: return 14;
-        case Form::MovReg:   return 12;
-        case Form::LeaReg:   return 10;
-        case Form::E9Mod:    return 6;
+        case Form::Ff15Call:
+        case Form::MovReg:
+        case Form::LeaReg: return 14;
+        case Form::E9Mod:  return 6;
         }
         return 14;
     }
@@ -163,8 +163,8 @@ namespace ObfHook
         { {0x4C, 0x8D, 0x1D}, {0x41, 0xFF, 0xE3}, 3 },
     };
 
-    static void WritePatch(uint8_t* dst, uint8_t* base, void* handler,
-                           Form form, int cover)
+    static int WritePatch(uint8_t* dst, uint8_t* base, void* handler,
+                          Form form, int cover)
     {
         const uint64_t h = (uint64_t)handler;
         const ULONGLONG seed = GetTickCount64() ^ ((ULONGLONG)(uintptr_t)base << 32);
@@ -229,8 +229,11 @@ namespace ObfHook
             }
         }
 
+        if (used > cover)
+            return -1;
         if (used < cover)
             FillJunk(dst + used, cover - used);
+        return used;
     }
 
     Form PickRandomForm()
@@ -320,7 +323,14 @@ namespace ObfHook
         }
 
         uint8_t patch[64] = {};
-        WritePatch(patch, t, handler, form, cover);
+        if (WritePatch(patch, t, handler, form, cover) < 0)
+        {
+            VirtualProtect(t, cover, protOld, &protOld);
+            FreezeThreads(false);
+            if (auxStub) VirtualFree(auxStub, 0, MEM_RELEASE);
+            VirtualFree(tramp, 0, MEM_RELEASE);
+            return false;
+        }
         memcpy(h->backup, t, cover);
         memcpy(t, patch, cover);
         FlushInstructionCache(GetCurrentProcess(), t, cover);
