@@ -49,6 +49,9 @@
     <Filter Include="MinHook\src\hde">
       <UniqueIdentifier>{E2A6C718-9D43-4F5B-86C0-7B9513AD6F02}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ObfHook">
+      <UniqueIdentifier>{0BFH0001-0000-4000-8000-000000000001}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Config\Config.h">
@@ -74,6 +77,9 @@
     </ClInclude>
     <ClInclude Include="src\Watcher\Watcher.h">
       <Filter>Watcher</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ObfHook\ObfHook.h">
+      <Filter>ObfHook</Filter>
     </ClInclude>
     <ClInclude Include="src\InteeProbe\InteeProbe.h">
       <Filter>InteeProbe</Filter>
@@ -133,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="src\Watcher\Watcher.cpp">
       <Filter>Watcher</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ObfHook\ObfHook.cpp">
+      <Filter>ObfHook</Filter>
     </ClCompile>
     <ClCompile Include="src\InteeProbe\InteeProbe.cpp">
       <Filter>InteeProbe</Filter>

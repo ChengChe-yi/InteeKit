@@ -50,7 +50,7 @@
       <PreprocessorDefinitions>_DEBUG;DROP_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src\Config;$(ProjectDir)src\Patterns;$(ProjectDir)src\Core;$(ProjectDir)src\Hooks;$(ProjectDir)src\PickupFilter;$(ProjectDir)src\InteeProbe;$(ProjectDir)src\InteeBtn;$(ProjectDir)src\Ini;$(ProjectDir)src\MinHook\include;$(ProjectDir)src\Logger;$(ProjectDir)src\Lists;$(ProjectDir)src\Scanner;$(ProjectDir)src\Watcher;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\Config;$(ProjectDir)src\Patterns;$(ProjectDir)src\Core;$(ProjectDir)src\Hooks;$(ProjectDir)src\PickupFilter;$(ProjectDir)src\InteeProbe;$(ProjectDir)src\InteeBtn;$(ProjectDir)src\Ini;$(ProjectDir)src\MinHook\include;$(ProjectDir)src\Logger;$(ProjectDir)src\Lists;$(ProjectDir)src\Scanner;$(ProjectDir)src\Watcher;$(ProjectDir)src\ObfHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -74,7 +74,7 @@
       <PreprocessorDefinitions>NDEBUG;DROP_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)src\Config;$(ProjectDir)src\Patterns;$(ProjectDir)src\Core;$(ProjectDir)src\Hooks;$(ProjectDir)src\PickupFilter;$(ProjectDir)src\InteeProbe;$(ProjectDir)src\InteeBtn;$(ProjectDir)src\Ini;$(ProjectDir)src\MinHook\include;$(ProjectDir)src\Logger;$(ProjectDir)src\Lists;$(ProjectDir)src\Scanner;$(ProjectDir)src\Watcher;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\Config;$(ProjectDir)src\Patterns;$(ProjectDir)src\Core;$(ProjectDir)src\Hooks;$(ProjectDir)src\PickupFilter;$(ProjectDir)src\InteeProbe;$(ProjectDir)src\InteeBtn;$(ProjectDir)src\Ini;$(ProjectDir)src\MinHook\include;$(ProjectDir)src\Logger;$(ProjectDir)src\Lists;$(ProjectDir)src\Scanner;$(ProjectDir)src\Watcher;$(ProjectDir)src\ObfHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -133,10 +133,12 @@
   <ItemGroup>
     <ClCompile Include="src\Watcher\Watcher.cpp" />
     <ClCompile Include="src\Lists\Lists.cpp" />
+    <ClCompile Include="src\ObfHook\ObfHook.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Watcher\Watcher.h" />
     <ClInclude Include="src\Lists\Lists.h" />
+    <ClInclude Include="src\ObfHook\ObfHook.h" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="src\Config\Config.ini" />

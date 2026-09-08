@@ -1,7 +1,6 @@
 ﻿#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "PickupFilter.h"
-#include <MinHook.h>
 #include "InteeBtn.h"
 #include "Lists.h"
 #include "Patterns.h"
@@ -20,25 +19,17 @@
 //   图标族（UI_ItemIcon_112 子串）才拦，提示框不再弹出。
 //   读到的字段：+0x18 物品名；图标走接口方法 #2（InteeBtn 统一查表）。
 //
-//   hook 机制：MinHook（src/MinHook，BSD 授权，静态编译）。指令边界
-//   解析、trampoline 构建、目标 patch 全部由它完成，卸载也无竞态。
-//   prologue 16 字节仍做版本守卫（编码唯一）：字节不匹配（游戏已更新）
-//   则拒绝 hook。
+//   hook 机制：ObfHook（src/ObfHook）——通用 hde64 切分 + 跳转绝对化 +
+//   混淆形态写入（Ff25/MovReg/LeaReg 随机），不依赖固定 prologue。
+//   切回标准 MinHook：git 历史基线（6256a28）即 MinHook 版。
 // ============================================================================
 
-// 版本守卫基准：prologue 16 字节（push 序列 + sub rsp,68h）。
-static const uint8_t kExpectedPrologue[16] = {
-    0x41, 0x57,                     // push r15
-    0x41, 0x56,                     // push r14
-    0x41, 0x55,                     // push r13
-    0x41, 0x54,                     // push r12
-    0x56, 0x57, 0x55, 0x53,         // push rsi, rdi, rbp, rbx
-    0x48, 0x83, 0xEC, 0x68          // sub rsp, 68h
-};
+#include "ObfHook.h"
 
 static uint8_t* g_base = nullptr;
 static void*    g_target = nullptr;
 static std::atomic<bool> g_hooked{ false };
+static ObfHook::Hook g_hook;
 
 typedef __int64 (__fastcall* tOriginal2)(__int64, __int64);
 static tOriginal2 g_orig = nullptr;
@@ -137,36 +128,17 @@ static bool DoInit()
 
     g_target = g_base + Offsets::RVA::PickupDataAdd;
 
-    // 版本守卫：prologue 字节不匹配（游戏已更新）则拒绝 hook。
-    uint8_t actual[sizeof(kExpectedPrologue)] = {};
-    memcpy(actual, g_target, sizeof(actual));
-    if (memcmp(actual, kExpectedPrologue, sizeof(actual)) != 0) {
-        LOG("拾取类", "prologue mismatch at %llX — game updated?",
+    if (!ObfHook::Create(&g_hook, g_target, (void*)&PD_Handler,
+                         ObfHook::PickRandomForm())) {
+        LOG("拾取类", "ObfHook::Create failed at %llX (prologue mismatch?)",
             (uint64_t)g_target);
         return false;
     }
 
-    MH_STATUS st = MH_Initialize();
-    if (st != MH_OK && st != MH_ERROR_ALREADY_INITIALIZED) {
-        LOG("拾取类", "MH_Initialize failed: %s", MH_StatusToString(st));
-        return false;
-    }
-
-    st = MH_CreateHook(g_target, &PD_Handler,
-                       reinterpret_cast<void**>(&g_orig));
-    if (st != MH_OK) {
-        LOG("拾取类", "MH_CreateHook failed: %s", MH_StatusToString(st));
-        return false;
-    }
-
-    st = MH_EnableHook(g_target);
-    if (st != MH_OK) {
-        LOG("拾取类", "MH_EnableHook failed: %s", MH_StatusToString(st));
-        return false;
-    }
-
+    g_orig = (tOriginal2)g_hook.tramp;
     g_hooked.store(true, std::memory_order_release);
-    LOG("拾取类", "target=%llX (MinHook)", (uint64_t)g_target);
+    LOG("拾取类", "target=%llX (ObfHook form=%d cover=%d)",
+        (uint64_t)g_target, (int)g_hook.form, g_hook.cover);
     return true;
 }
 
@@ -179,15 +151,12 @@ bool PickupFilter::Init()
     }
 }
 
-// MinHook 负责 trampoline 生命周期（含线程冻结，卸载无竞态）；
-// 这里只摘除本模块的 hook，MH_Uninitialize 由 Hooks::Uninit 统一调用。
 void PickupFilter::Uninit()
 {
     if (!g_hooked.exchange(false))
         return;
 
-    MH_DisableHook(g_target);
-    MH_RemoveHook(g_target);
+    ObfHook::Remove(&g_hook);
     g_orig = nullptr;
-    LOG_MSG("拾取类", "Uninit OK");
+    LOG_MSG("拾取类", "Uninit OK (ObfHook)");
 }

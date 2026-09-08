@@ -1,12 +1,12 @@
 ﻿#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "InteeProbe.h"
-#include <MinHook.h>
 #include "InteeBtn.h"
 #include "Lists.h"
 #include "Patterns.h"
 #include "Config.h"
 #include "Logger.h"
+#include "ObfHook.h"
 #include <atomic>
 #include <cstdint>
 #include <cstring>
@@ -15,18 +15,10 @@
 static uint8_t* g_base = nullptr;
 static void*    g_target = nullptr;
 static std::atomic<bool> g_hooked{ false };
+static ObfHook::Hook g_hook;
 
 typedef __int64 (__fastcall* tOriginal2)(__int64, __int64);
 static tOriginal2 g_orig = nullptr;
-
-static const uint8_t kExpectedPrologue[16] = {
-    0x41, 0x57,                     // push r15
-    0x41, 0x56,                     // push r14
-    0x41, 0x55,                     // push r13
-    0x41, 0x54,                     // push r12
-    0x56, 0x57, 0x55, 0x53,         // push rsi, rdi, rbp, rbx
-    0x48, 0x83, 0xEC, 0x68          // sub rsp, 68h
-};
 
 
 // 追加 key='value'（无尾随空格）。
@@ -118,35 +110,17 @@ static bool DoInit()
 
     g_target = g_base + Offsets::RVA::BtnDispatch;
 
-    uint8_t actual[sizeof(kExpectedPrologue)] = {};
-    memcpy(actual, g_target, sizeof(actual));
-    if (memcmp(actual, kExpectedPrologue, sizeof(actual)) != 0) {
-        LOG("交互类", "prologue mismatch at %llX — game updated?",
+    if (!ObfHook::Create(&g_hook, g_target, (void*)&ProbeHandler,
+                         ObfHook::PickRandomForm())) {
+        LOG("交互类", "ObfHook::Create failed at %llX (prologue mismatch?)",
             (uint64_t)g_target);
         return false;
     }
 
-    MH_STATUS st = MH_Initialize();
-    if (st != MH_OK && st != MH_ERROR_ALREADY_INITIALIZED) {
-        LOG("交互类", "MH_Initialize failed: %s", MH_StatusToString(st));
-        return false;
-    }
-
-    st = MH_CreateHook(g_target, &ProbeHandler,
-                       reinterpret_cast<void**>(&g_orig));
-    if (st != MH_OK) {
-        LOG("交互类", "MH_CreateHook failed: %s", MH_StatusToString(st));
-        return false;
-    }
-
-    st = MH_EnableHook(g_target);
-    if (st != MH_OK) {
-        LOG("交互类", "MH_EnableHook failed: %s", MH_StatusToString(st));
-        return false;
-    }
-
+    g_orig = (tOriginal2)g_hook.tramp;
     g_hooked.store(true, std::memory_order_release);
-    LOG("交互类", "target=%llX (MinHook)", (uint64_t)g_target);
+    LOG("交互类", "target=%llX (ObfHook form=%d cover=%d)",
+        (uint64_t)g_target, (int)g_hook.form, g_hook.cover);
     return true;
 }
 
@@ -164,8 +138,7 @@ void InteeProbe::Uninit()
     if (!g_hooked.exchange(false))
         return;
 
-    MH_DisableHook(g_target);
-    MH_RemoveHook(g_target);
+    ObfHook::Remove(&g_hook);
     g_orig = nullptr;
-    LOG_MSG("交互类", "Uninit OK");
+    LOG_MSG("交互类", "Uninit OK (ObfHook)");
 }

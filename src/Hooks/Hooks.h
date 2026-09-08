@@ -9,6 +9,6 @@ namespace Hooks
     // false 表示全部失败（如游戏版本不匹配导致 prologue mismatch）。
     bool Init();
 
-    // 摘除两个 hook 并调用 MH_Uninitialize；对未初始化的部分失败路径幂等。
+    // 摘除两个 ObfHook hook；未安装（失败路径）时幂等。
     void Uninit();
 }
