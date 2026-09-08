@@ -4,10 +4,12 @@
 namespace ObfHook
 {
     // 混淆形态族（编码细节见 cpp）：
-    //   Ff25    FF 25 <disp32> + <abs64>（RIP 相对间接跳）
-    //   MovReg  mov rX,imm64; jmp rX（X ∈ volatile 集）
-    //   LeaReg  lea rX,[rip+disp32]; jmp rX（模块内可达时）
-    enum class Form { Ff25 = 0, MovReg = 1, LeaReg = 2 };
+    //   Ff25     FF 25 <disp32> + <abs64>（RIP 相对间接跳，目标模块内）
+    //   MovReg   mov rX,imm64; jmp rX（X ∈ {rax,r10,r11}）
+    //   LeaReg   lea rX,[rip+disp32]; jmp rX（同上寄存器）
+    //   E9Mod    E9 rel32 → 模块内 handler（±2GB 限制，超范围自动失败）
+    //   Ff25Heap FF25 编码但目标指向 VirtualAlloc 堆区（决定性实验）
+    enum class Form { Ff25 = 0, MovReg = 1, LeaReg = 2, E9Mod = 3, Ff25Heap = 4 };
 
     // 随机选取一个形态族（每次启动/每个 hook 点独立随机）。
     Form PickRandomForm();
@@ -19,6 +21,7 @@ namespace ObfHook
         Form     form   = Form::Ff25;
         uint8_t  backup[64] = {};
         void*    tramp  = nullptr;   // 原函数替身（搬移指令 + 修正 + 跳回）
+        void*    aux    = nullptr;   // 附加分配（Ff25Heap 的堆区跳板，Remove 释放）
     };
 
     // 安装：hde64 通用指令切分 + RIP-rel/跳转修正（参考 MinHook trampoline

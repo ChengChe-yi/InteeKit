@@ -137,8 +137,8 @@ static bool DoInit()
 
     g_orig = (tOriginal2)g_hook.tramp;
     g_hooked.store(true, std::memory_order_release);
-    LOG("拾取类", "target=%llX (ObfHook form=%d cover=%d)",
-        (uint64_t)g_target, (int)g_hook.form, g_hook.cover);
+    LOG("拾取类", "target=%llX (ObfHook form=%d cover=%d aux=%p)",
+        (uint64_t)g_target, (int)g_hook.form, g_hook.cover, g_hook.aux);
     return true;
 }
 
